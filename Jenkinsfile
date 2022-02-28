@@ -18,7 +18,7 @@ node {
         imageBuild(CONTAINER_NAME, CONTAINER_TAG)
     }
     stage('Run Tests'){
-        execInContainer(CONTAINER_NAME, CONTAINER_TAG, "pytest")
+        execInContainer(CONTAINER_NAME, CONTAINER_TAG, "pipenv run test")
     }
 }
 def imagePrune(containerName){
