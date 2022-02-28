@@ -33,7 +33,7 @@ def imageBuild(containerName, tag){
     echo "Image build complete"
 }
 def execInContainer(containerName, tag, command){
-    sh "docker rm $containerName"
     sh "docker run --name $containerName $containerName:$tag /bin/bash -c \"$command\""
+    sh "docker rm $containerName"
     echo "Command $command execution complete"
 }
