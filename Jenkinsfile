@@ -9,7 +9,7 @@ node {
       env.DOCKER_HOST = 'tcp://172.31.10.107:4243'
     }
     stage('Git Clone') {
-      git([url: 'https://gitlab.com/py29/python-sample.git', branch: 'main', credentialsId: ''])
+      git([url: 'https://github.com/tapanbanker/python-sample-test.git', branch: 'main', credentialsId: ''])
     }
     stage("Image Prune"){
         imagePrune(CONTAINER_NAME)
