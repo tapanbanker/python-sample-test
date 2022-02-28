@@ -25,6 +25,7 @@ def imagePrune(containerName){
     try {
         sh "docker image prune -f"
         sh "docker stop $containerName"
+        sh "docker rm $containerName"
     } catch(error){}
 }
 def imageBuild(containerName, tag){
@@ -32,6 +33,7 @@ def imageBuild(containerName, tag){
     echo "Image build complete"
 }
 def execInContainer(containerName, tag, command){
+    sh "docker rm $containerName"
     sh "docker run --name $containerName $containerName:$tag /bin/bash -c \"$command\""
     echo "Command $command execution complete"
 }
