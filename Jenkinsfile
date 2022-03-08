@@ -1,5 +1,7 @@
 def CONTAINER_NAME="$JOB_NAME"
 def CONTAINER_TAG="$BUILD_TAG"
+def ARTIFACTS_FOLDER="/tmp/${JOB_NAME}_artifacts"
+def CONTAINER_WORKSPACE="/app"
 
 node {
     stage('Initialize'){
@@ -20,18 +22,9 @@ node {
     stage('Run Tests'){
         execInContainer(CONTAINER_NAME, CONTAINER_TAG, "pipenv run test")
     }
-    /*
-     stage('Upload') {
-        dir('path/to/your/project/workspace'){
-            pwd(); //Log current directory
-            withAWS(region:'yourS3Region',credentials:'yourIDfromStep2') {
-                 def identity=awsIdentity();//Log AWS credentials
-                // Upload files from working directory 'dist' in your project workspace
-                s3Upload(bucket:"yourBucketName", workingDir:'dist', includePathPattern:'**/*');
-            }
-        };
+    stage('Archive and Upload'){
+        zipAndUpload(CONTAINER_NAME, CONTAINER_TAG, ARTIFACTS_FOLDER, CONTAINER_WORKSPACE);
     }
-    */
 }
 def imagePrune(containerName){
     try {
@@ -48,4 +41,16 @@ def execInContainer(containerName, tag, command){
     sh "docker run --name $containerName $containerName:$tag /bin/bash -c \"$command\""
     sh "docker rm $containerName"
     echo "Command $command execution complete"
+}
+
+def zipAndUpload(containerName, tag, artifacts_folder, container_workspace){
+    sh "mkdir -p ${artifacts_folder}"
+    sh "docker run --name $containerName $containerName:$tag /bin/bash -c \"rm -rf .git && mkdir -p /artifacts && tar -zcvf /artifacts/gzipped.tar.gz ${container_workspace} && ls /artifacts\" "
+    sh "docker cp $containerName:/artifacts/gzipped.tar.gz ${artifacts_folder}"
+    sh "cp ${artifacts_folder}/gzipped.tar.gz /var/jenkins_home/workspace/${containerName}/"
+    withAWS(region:'us-east-1',credentials:'aws_test') {
+        s3Upload(bucket:"test-tapan-temp", file:'gzipped.tar.gz', path:'gzipped.tar.gz');
+    }
+    sh "docker rm $containerName"
+    echo "Archive created and uploaded"
 }
